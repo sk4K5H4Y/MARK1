@@ -1,0 +1,951 @@
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Instrument+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --ink:#1C1522;
+    --ink-soft:#6E6376;
+    --paper:#FFFFFF;
+    --panel:#F5F2EC;
+    --panel-deep:#EBE6DC;
+    --line:#E2DCD2;
+    --marigold:#E8A33D;
+    --marigold-deep:#C87F1C;
+    --peacock:#0E6E6B;
+    --peacock-soft:#E2F0EE;
+    --aubergine:#4A2246;
+    --rose:#B8425C;
+    --rose-soft:#FBE9ED;
+    --r:14px;
+    --shadow:0 1px 2px rgba(28,21,34,.05), 0 8px 24px -12px rgba(28,21,34,.18);
+  }
+  *{box-sizing:border-box}
+  body{margin:0}
+  .app{
+    font-family:"Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+    color:var(--ink);
+    background:var(--paper);
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  .app h1,.app h2,.app h3,.dsp{font-family:"Bricolage Grotesque","Instrument Sans",sans-serif;letter-spacing:-.02em;line-height:1.05;font-weight:800}
+  .mono{font-family:"DM Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+
+  /* ---------- top bar ---------- */
+  .topbar{position:sticky;top:0;z-index:40;background:var(--paper);border-bottom:1px solid var(--line)}
+  .topbar-in{display:flex;align-items:center;gap:16px;height:64px}
+  .brand{display:flex;flex-direction:column;gap:1px;margin-right:auto;min-width:0}
+  .brand b{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:19px;letter-spacing:-.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .brand span{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft)}
+  .seg{display:flex;background:var(--panel);border-radius:999px;padding:3px}
+  .seg button{border:0;background:transparent;font:inherit;font-size:13px;font-weight:600;color:var(--ink-soft);padding:7px 15px;border-radius:999px;cursor:pointer}
+  .seg button.on{background:var(--ink);color:#fff}
+  .cartbtn{position:relative;border:1px solid var(--line);background:var(--paper);border-radius:999px;padding:9px 16px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px}
+  .cartbtn:hover{border-color:var(--ink)}
+  .pip{background:var(--marigold);color:var(--ink);border-radius:999px;min-width:20px;height:20px;display:grid;place-items:center;font-size:11px;font-weight:700;padding:0 5px}
+
+  /* ---------- date lens ---------- */
+  .lens{background:var(--aubergine);color:#fff}
+  .lens-in{display:flex;align-items:flex-end;gap:26px;padding:26px 0 24px;flex-wrap:wrap}
+  .lens h1{font-size:clamp(26px,3.4vw,40px);margin:0 0 6px;color:#fff}
+  .lens p{margin:0;font-size:13.5px;color:rgba(255,255,255,.62);max-width:34ch}
+  .lens-fields{display:flex;gap:12px;flex-wrap:wrap;margin-left:auto}
+  .field{display:flex;flex-direction:column;gap:6px}
+  .field label{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.55)}
+  .field input,.field select{
+    font:inherit;font-size:14px;font-family:"DM Mono",monospace;
+    background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.22);
+    color:#fff;border-radius:10px;padding:10px 12px;min-width:150px;
+  }
+  .field input:focus,.field select:focus{outline:2px solid var(--marigold);outline-offset:1px}
+  .field select option{color:var(--ink)}
+  .retdate{font-size:12px;color:var(--marigold);font-family:"DM Mono",monospace;padding-bottom:11px}
+
+  /* ---------- filters ---------- */
+  .filters{display:flex;gap:8px;flex-wrap:wrap;padding:22px 0 18px;align-items:center}
+  .chip{border:1px solid var(--line);background:var(--paper);border-radius:999px;padding:7px 14px;font:inherit;font-size:12.5px;font-weight:500;color:var(--ink-soft);cursor:pointer}
+  .chip.on{background:var(--ink);border-color:var(--ink);color:#fff}
+  .count{margin-left:auto;font-size:12.5px;color:var(--ink-soft)}
+
+  /* ---------- grid ---------- */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(258px,1fr));gap:20px;padding-bottom:64px}
+  .card{border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--paper);display:flex;flex-direction:column;transition:transform .16s ease, box-shadow .16s ease}
+  .card:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+  .thumb{aspect-ratio:4/3;background:var(--panel);position:relative;overflow:hidden}
+  .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+  .thumb .mono-mark{position:absolute;inset:0;display:grid;place-items:center;font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:40px;color:rgba(255,255,255,.9)}
+  .tag{position:absolute;top:10px;left:10px;background:rgba(255,255,255,.94);border-radius:999px;padding:4px 10px;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:600}
+  .card-body{padding:14px 15px 15px;display:flex;flex-direction:column;gap:10px;flex:1}
+  .card h3{font-size:16px;margin:0;font-weight:600;letter-spacing:-.01em;font-family:"Instrument Sans",sans-serif}
+  .prices{display:flex;gap:14px;flex-wrap:wrap}
+  .price{display:flex;flex-direction:column;gap:1px}
+  .price em{font-style:normal;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft)}
+  .price b{font-family:"DM Mono",monospace;font-size:15px;font-weight:500}
+  .price.rent b{color:var(--peacock)}
+  .price.buy b{color:var(--aubergine)}
+
+  /* signature: availability meter */
+  .avail{border-top:1px dashed var(--line);padding-top:10px;margin-top:auto;display:flex;flex-direction:column;gap:7px}
+  .avail-top{display:flex;justify-content:space-between;align-items:baseline;font-size:12px}
+  .avail-top b{font-family:"DM Mono",monospace;font-weight:500}
+  .bar{height:5px;border-radius:99px;background:var(--panel-deep);overflow:hidden}
+  .bar i{display:block;height:100%;background:var(--peacock);transition:width .35s cubic-bezier(.2,.7,.3,1)}
+  .bar i.low{background:var(--marigold)}
+  .bar i.none{background:var(--rose)}
+  .avail-note{font-size:11.5px;color:var(--ink-soft)}
+  .avail-note.out{color:var(--rose)}
+
+  .actions{display:flex;gap:8px;align-items:center}
+  .stepper{display:flex;align-items:center;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+  .stepper button{border:0;background:var(--paper);font:inherit;width:28px;height:34px;cursor:pointer;color:var(--ink-soft);font-size:15px}
+  .stepper button:hover{background:var(--panel)}
+  .stepper input{width:42px;border:0;text-align:center;font-family:"DM Mono",monospace;font-size:13px;padding:0;height:34px}
+  .stepper input:focus{outline:none;background:var(--panel)}
+  .btn{border:0;border-radius:9px;font:inherit;font-size:13px;font-weight:600;padding:9px 13px;cursor:pointer;height:34px;white-space:nowrap}
+  .btn-rent{background:var(--peacock);color:#fff;flex:1}
+  .btn-rent:hover{background:#0A5754}
+  .btn-buy{background:transparent;color:var(--aubergine);border:1px solid var(--line)}
+  .btn-buy:hover{border-color:var(--aubergine)}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+  .btn-primary{background:var(--marigold);color:var(--ink);height:auto;padding:13px 18px;font-size:14px}
+  .btn-primary:hover{background:var(--marigold-deep);color:#fff}
+  .btn-ghost{background:transparent;border:1px solid var(--line);color:var(--ink)}
+  .btn-ghost:hover{border-color:var(--ink)}
+  .btn-dark{background:var(--ink);color:#fff}
+
+  /* ---------- drawer ---------- */
+  .scrim{position:fixed;inset:0;background:rgba(28,21,34,.42);z-index:50;opacity:0;pointer-events:none;transition:opacity .2s}
+  .scrim.on{opacity:1;pointer-events:auto}
+  .drawer{position:fixed;top:0;right:0;height:100%;width:min(440px,100%);background:var(--paper);z-index:51;transform:translateX(102%);transition:transform .26s cubic-bezier(.2,.7,.3,1);display:flex;flex-direction:column}
+  .drawer.on{transform:none}
+  .drawer-head{padding:20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px}
+  .drawer-head h2{font-size:19px;margin:0;flex:1}
+  .x{border:0;background:var(--panel);width:32px;height:32px;border-radius:99px;font-size:16px;cursor:pointer;color:var(--ink-soft)}
+  .drawer-body{flex:1;overflow:auto;padding:20px}
+  .drawer-foot{border-top:1px solid var(--line);padding:18px 20px;background:var(--panel)}
+
+  .line{display:flex;gap:12px;padding:14px 0;border-bottom:1px solid var(--line)}
+  .line-thumb{width:62px;height:62px;border-radius:9px;overflow:hidden;background:var(--panel);flex:none;position:relative}
+  .line-thumb img{width:100%;height:100%;object-fit:cover}
+  .line-main{flex:1;min-width:0}
+  .line-main strong{display:block;font-size:14px;font-weight:600}
+  .badge{display:inline-block;font-size:10px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;border-radius:5px;padding:2px 7px;margin-top:4px}
+  .badge.rent{background:var(--peacock-soft);color:var(--peacock)}
+  .badge.buy{background:#F1E7F0;color:var(--aubergine)}
+  .line-meta{font-size:12px;color:var(--ink-soft);margin-top:5px;font-family:"DM Mono",monospace}
+  .line-amt{text-align:right;font-family:"DM Mono",monospace;font-size:14px}
+  .link{background:none;border:0;font:inherit;font-size:11.5px;color:var(--rose);cursor:pointer;padding:4px 0 0;text-decoration:underline}
+
+  .totals{display:flex;flex-direction:column;gap:7px;margin-bottom:14px}
+  .trow{display:flex;justify-content:space-between;font-size:13.5px}
+  .trow span:last-child{font-family:"DM Mono",monospace}
+  .trow.big{font-size:17px;font-weight:700;padding-top:9px;border-top:1px solid var(--line)}
+  .trow.muted{color:var(--ink-soft);font-size:12.5px}
+
+  .empty{text-align:center;padding:56px 20px;color:var(--ink-soft)}
+  .empty b{display:block;font-family:"Bricolage Grotesque",sans-serif;font-size:19px;color:var(--ink);margin-bottom:6px}
+
+  /* ---------- forms ---------- */
+  .form{display:flex;flex-direction:column;gap:14px}
+  .frow{display:flex;gap:12px;flex-wrap:wrap}
+  .frow>*{flex:1;min-width:130px}
+  .inp{display:flex;flex-direction:column;gap:5px}
+  .inp label{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft)}
+  .inp input,.inp select,.inp textarea{font:inherit;font-size:14px;border:1px solid var(--line);border-radius:9px;padding:10px 12px;background:var(--paper);color:var(--ink);width:100%}
+  .inp input[type=number]{font-family:"DM Mono",monospace}
+  .inp input:focus,.inp select:focus,.inp textarea:focus{outline:none;border-color:var(--ink)}
+  .hint{font-size:11.5px;color:var(--ink-soft)}
+  .check{display:flex;align-items:center;gap:8px;font-size:13.5px}
+  .check input{width:16px;height:16px;accent-color:var(--peacock)}
+
+  .pay{display:flex;flex-direction:column;gap:9px}
+  .pay-opt{display:flex;align-items:center;gap:11px;border:1px solid var(--line);border-radius:11px;padding:13px 14px;cursor:pointer;font-size:14px}
+  .pay-opt.on{border-color:var(--peacock);background:var(--peacock-soft)}
+  .pay-opt input{accent-color:var(--peacock)}
+  .note{background:var(--panel);border-radius:10px;padding:11px 13px;font-size:12px;color:var(--ink-soft)}
+
+  .done{text-align:center;padding:34px 8px}
+  .done .tick{width:56px;height:56px;border-radius:99px;background:var(--peacock-soft);color:var(--peacock);display:grid;place-items:center;font-size:26px;margin:0 auto 16px}
+  .done h2{font-size:24px;margin:0 0 8px}
+  .done .oid{font-family:"DM Mono",monospace;font-size:15px;background:var(--panel);display:inline-block;padding:7px 14px;border-radius:8px;margin:10px 0 16px}
+
+  /* ---------- warehouse ---------- */
+  .wtabs{display:flex;gap:24px;border-bottom:1px solid var(--line);margin-top:6px}
+  .wtabs button{border:0;background:none;font:inherit;font-size:14px;font-weight:600;color:var(--ink-soft);padding:14px 0;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+  .wtabs button.on{color:var(--ink);border-color:var(--marigold)}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;padding:22px 0}
+  .stat{background:var(--panel);border-radius:12px;padding:15px 16px}
+  .stat em{font-style:normal;display:block;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:6px}
+  .stat b{font-family:"Bricolage Grotesque",sans-serif;font-size:26px;font-weight:800;letter-spacing:-.03em}
+  .bar-head{display:flex;align-items:center;gap:12px;padding:4px 0 18px;flex-wrap:wrap}
+  .bar-head h2{font-size:20px;margin:0;margin-right:auto}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th{text-align:left;font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-soft);font-weight:600;padding:0 12px 10px 0;border-bottom:1px solid var(--line)}
+  td{padding:13px 12px 13px 0;border-bottom:1px solid var(--line);vertical-align:middle}
+  td.num,th.num{text-align:right;font-family:"DM Mono",monospace;padding-right:0}
+  .rowthumb{width:44px;height:44px;border-radius:8px;overflow:hidden;background:var(--panel);position:relative}
+  .rowthumb img{width:100%;height:100%;object-fit:cover}
+  .iname{display:flex;align-items:center;gap:12px}
+  .iname b{font-weight:600}
+  .iname small{display:block;color:var(--ink-soft);font-size:11.5px}
+  .flags{display:flex;gap:5px}
+  .flag{font-size:10px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;padding:2px 6px;border-radius:5px;background:var(--panel-deep);color:var(--ink-soft)}
+  .flag.on-rent{background:var(--peacock-soft);color:var(--peacock)}
+  .flag.on-buy{background:#F1E7F0;color:var(--aubergine)}
+  .tbtn{border:1px solid var(--line);background:var(--paper);border-radius:7px;font:inherit;font-size:12px;padding:6px 10px;cursor:pointer;color:var(--ink-soft)}
+  .tbtn:hover{border-color:var(--ink);color:var(--ink)}
+  .tbtn.danger:hover{border-color:var(--rose);color:var(--rose)}
+  .status{font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;padding:3px 8px;border-radius:6px;background:var(--peacock-soft);color:var(--peacock)}
+  .status.out{background:#FDF1DF;color:var(--marigold-deep)}
+  .status.done{background:var(--panel-deep);color:var(--ink-soft)}
+  .ordercard{border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:12px}
+  .ordercard-top{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap}
+  .ordercard-top b{font-family:"DM Mono",monospace;font-size:14px}
+  .ordercard-top .who{font-weight:600}
+  .ordercard-top .amt{margin-left:auto;font-family:"DM Mono",monospace;font-weight:600}
+  .ol{font-size:13px;color:var(--ink-soft);margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);display:flex;flex-direction:column;gap:4px}
+  .ol span b{color:var(--ink);font-weight:600}
+  .photo-drop{border:1.5px dashed var(--line);border-radius:11px;padding:16px;text-align:center;cursor:pointer;background:var(--panel)}
+  .photo-drop:hover{border-color:var(--marigold)}
+  .photo-prev{width:100%;aspect-ratio:4/3;border-radius:11px;overflow:hidden;background:var(--panel)}
+  .photo-prev img{width:100%;height:100%;object-fit:cover}
+  .toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,20px);background:var(--ink);color:#fff;padding:12px 20px;border-radius:99px;font-size:13.5px;z-index:80;opacity:0;pointer-events:none;transition:.22s}
+  .toast.on{opacity:1;transform:translate(-50%,0)}
+  .warn{background:var(--rose-soft);color:var(--rose);border-radius:9px;padding:10px 12px;font-size:12.5px}
+  @media (max-width:640px){
+    .lens-fields{width:100%;margin-left:0}
+    .field input,.field select{min-width:0;width:100%}
+    .field{flex:1}
+    .brand span{display:none}
+    .hide-sm{display:none}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="app" id="app">
+  <div class="topbar">
+    <div class="wrap topbar-in">
+      <div class="brand">
+        <b id="brandName">Loading</b>
+        <span id="brandCity"></span>
+      </div>
+      <div class="seg">
+        <button id="tabShop" class="on">Shop</button>
+        <button id="tabWh">Warehouse</button>
+      </div>
+      <button class="cartbtn" id="openCart">Cart <span class="pip" id="cartPip">0</span></button>
+    </div>
+  </div>
+
+  <!-- SHOP -->
+  <section id="shopView">
+    <div class="lens">
+      <div class="wrap lens-in">
+        <div>
+          <h1>Everything we have,<br>free on your date.</h1>
+          <p>Set the event date first. Stock counts below update to what is actually free that week.</p>
+        </div>
+        <div class="lens-fields">
+          <div class="field">
+            <label for="dStart">Event date</label>
+            <input type="date" id="dStart">
+          </div>
+          <div class="field">
+            <label for="dDays">Days on hire</label>
+            <select id="dDays">
+              <option value="1">1 day</option>
+              <option value="2">2 days</option>
+              <option value="3" selected>3 days</option>
+              <option value="4">4 days</option>
+              <option value="5">5 days</option>
+              <option value="7">7 days</option>
+            </select>
+          </div>
+          <div class="retdate" id="retDate"></div>
+        </div>
+      </div>
+    </div>
+    <div class="wrap">
+      <div class="filters" id="filters"></div>
+      <div class="grid" id="grid"></div>
+    </div>
+  </section>
+
+  <!-- WAREHOUSE -->
+  <section id="whView" style="display:none">
+    <div class="wrap">
+      <div class="wtabs">
+        <button id="wtInv" class="on">Inventory</button>
+        <button id="wtOrd">Orders</button>
+        <button id="wtSet">Settings</button>
+      </div>
+      <div id="whBody"></div>
+    </div>
+  </section>
+
+  <div class="scrim" id="scrim"></div>
+  <aside class="drawer" id="drawer">
+    <div class="drawer-head">
+      <h2 id="drawerTitle">Cart</h2>
+      <button class="x" id="closeDrawer">✕</button>
+    </div>
+    <div class="drawer-body" id="drawerBody"></div>
+    <div class="drawer-foot" id="drawerFoot"></div>
+  </aside>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ============ storage ============ */
+  const K_CAT="decor:catalog", K_IMG="decor:images", K_ORD="decor:orders";
+  async function sget(key){
+    try{ const r = await window.storage.get(key); return r ? JSON.parse(r.value) : null; }
+    catch(e){ return null; }
+  }
+  async function sset(key,val){
+    try{ await window.storage.set(key, JSON.stringify(val)); return true; }
+    catch(e){ toast("Could not save. Change is only on screen."); return false; }
+  }
+
+  /* ============ state ============ */
+  const S = {
+    settings:{ name:"", city:"", delivery:2500 },
+    items:[], images:{}, orders:[],
+    cart:[], mode:"shop", whTab:"inv", filter:"All",
+    step:"cart", pay:"upi",
+    start:"", days:3,
+    editing:null, draftPhoto:null
+  };
+
+  const CATS=["Seating","Mandap & Stage","Lighting","Florals & Drapes","Tables","Props"];
+
+  /* ============ helpers ============ */
+  const rs = n => "₹" + Math.round(n).toLocaleString("en-IN");
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s??"").replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const uid = p => p + Math.random().toString(36).slice(2,8);
+
+  function iso(d){ return d.toISOString().slice(0,10); }
+  function addDays(s,n){ const d=new Date(s+"T00:00:00"); d.setDate(d.getDate()+n); return iso(d); }
+  function fmt(s){
+    if(!s) return "";
+    const d=new Date(s+"T00:00:00");
+    return d.toLocaleDateString("en-IN",{day:"numeric",month:"short"});
+  }
+  function fmtLong(s){
+    const d=new Date(s+"T00:00:00");
+    return d.toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"});
+  }
+  function endDate(){ return addDays(S.start, S.days-1); }
+  function eachDay(a,b,fn){ let c=a; let guard=0; while(c<=b && guard++<400){ fn(c); c=addDays(c,1);} }
+  function overlaps(a1,a2,b1,b2){ return a1<=b2 && b1<=a2; }
+
+  let toastTimer;
+  function toast(msg){
+    const t=$("toast"); t.textContent=msg; t.classList.add("on");
+    clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove("on"),2600);
+  }
+
+  function hue(str){ let h=0; for(let i=0;i<str.length;i++) h=(h*31+str.charCodeAt(i))%360; return h; }
+  function placeholder(item){
+    const h=hue(item.name);
+    return `<div style="position:absolute;inset:0;background:linear-gradient(140deg,hsl(${h},32%,72%),hsl(${(h+40)%360},38%,52%))"></div>
+            <div class="mono-mark">${esc(item.name.trim()[0]||"?")}</div>`;
+  }
+  function thumbHTML(item){
+    const src=S.images[item.id];
+    return src ? `<img src="${src}" alt="${esc(item.name)}">` : placeholder(item);
+  }
+
+  /* ============ availability ============ */
+  function soldQty(id){
+    let n=0;
+    S.orders.forEach(o=>o.lines.forEach(l=>{ if(l.itemId===id && l.mode==="buy") n+=l.qty; }));
+    return n;
+  }
+  function stockLeft(item){ return Math.max(0, item.qty - soldQty(item.id)); }
+
+  // max number of units committed on any single day in the window
+  function peakBooked(id,a,b){
+    const perDay={};
+    S.orders.forEach(o=>o.lines.forEach(l=>{
+      if(l.itemId!==id || l.mode!=="rent") return;
+      if(!overlaps(l.start,l.end,a,b)) return;
+      eachDay(l.start,l.end,d=>{ if(d>=a&&d<=b) perDay[d]=(perDay[d]||0)+l.qty; });
+    }));
+    // also count what is already sitting in this cart
+    S.cart.forEach(l=>{
+      if(l.itemId!==id || l.mode!=="rent") return;
+      if(!overlaps(l.start,l.end,a,b)) return;
+      eachDay(l.start,l.end,d=>{ if(d>=a&&d<=b) perDay[d]=(perDay[d]||0)+l.qty; });
+    });
+    return Object.values(perDay).reduce((m,v)=>Math.max(m,v),0);
+  }
+  function freeToRent(item,a,b){ return Math.max(0, stockLeft(item) - peakBooked(item.id,a,b)); }
+  function freeToBuy(item){
+    const inCart = S.cart.filter(l=>l.itemId===item.id && l.mode==="buy").reduce((n,l)=>n+l.qty,0);
+    return Math.max(0, stockLeft(item) - inCart);
+  }
+
+  /* ============ seed ============ */
+  function seedItems(){
+    const d=[
+      ["Gold Chiavari Chair","Seating",240,85,1850,370,"Cushioned seat, stackable"],
+      ["White Banquet Chair","Seating",400,45,1200,240,"Steel frame, washable cover"],
+      ["Carved Mandap Pillar Set","Mandap & Stage",12,6500,48000,9600,"Four pillars, 8ft, teak finish"],
+      ["Marigold Backdrop Panel","Florals & Drapes",30,1200,4500,900,"6ft x 8ft, artificial genda"],
+      ["Crystal Chandelier 3ft","Lighting",18,2800,22000,4400,"Needs a rigging point"],
+      ["Round Banquet Table 6ft","Tables",60,350,4800,960,"Seats 8 to 10"],
+      ["Fairy Light Curtain 10ft","Lighting",120,180,950,190,"Warm white, mains powered"],
+      ["Brass Urli with Stand","Props",45,450,3200,640,"18 inch, floats and diyas"],
+      ["Velvet Couple Sofa","Seating",8,4500,35000,7000,"Bride and groom seating"],
+      ["Red Pathway Runner 20ft","Florals & Drapes",25,600,3900,780,"Non slip backing"],
+      ["Bamboo Arch Frame","Mandap & Stage",16,2200,15000,3000,"9ft, dress it as you like"],
+      ["Uplighter (warm amber)","Lighting",80,220,1800,360,"Battery, 8 hour run"]
+    ];
+    return d.map(r=>({
+      id:uid("it_"), name:r[0], cat:r[1], qty:r[2],
+      rent:r[3], buy:r[4], deposit:r[5], desc:r[6],
+      forRent:true, forSale:r[0]!=="Carved Mandap Pillar Set"
+    }));
+  }
+  function seedOrders(items){
+    const find=n=>items.find(i=>i.name===n);
+    const base=addDays(iso(new Date()),26);
+    const mk=(who,phone,venue,lines,start,days)=>{
+      const end=addDays(start,days-1);
+      const L=lines.map(([n,qty,mode])=>{
+        const it=find(n);
+        const unit = mode==="rent" ? it.rent : it.buy;
+        const amount = mode==="rent" ? unit*qty*days : unit*qty;
+        return {itemId:it.id,name:it.name,mode,qty,start:mode==="rent"?start:"",end:mode==="rent"?end:"",days:mode==="rent"?days:0,unit,amount,deposit:mode==="rent"?it.deposit*qty:0};
+      });
+      const sub=L.reduce((n,l)=>n+l.amount,0);
+      const dep=L.reduce((n,l)=>n+l.deposit,0);
+      return {id:"WD-"+Math.floor(1000+Math.random()*8999),customer:{name:who,phone,email:"",venue},
+        lines:L, subtotal:sub, deposit:dep, delivery:2500, total:sub+dep+2500,
+        start, end, createdAt:Date.now(), status:"Confirmed"};
+    };
+    return [
+      mk("Ramya Krishnan","98404 22118","Sri Lakshmi Mahal, T Nagar",
+         [["Gold Chiavari Chair",200,"rent"],["Marigold Backdrop Panel",12,"rent"],["Brass Urli with Stand",20,"rent"]], base, 3),
+      mk("Vignesh Rao","94445 71230","Green Park Resort, ECR",
+         [["Carved Mandap Pillar Set",9,"rent"],["Crystal Chandelier 3ft",14,"rent"],["Velvet Couple Sofa",6,"rent"]], addDays(base,2), 2)
+    ];
+  }
+
+  /* ============ boot ============ */
+  async function boot(){
+    const today=iso(new Date());
+    S.start = addDays(today,27);
+
+    let cat = await sget(K_CAT);
+    const img = await sget(K_IMG);
+    const ord = await sget(K_ORD);
+
+    if(!cat){
+      const items=seedItems();
+      cat={ settings:{name:"Aarambh Decor Rentals", city:"Bengaluru", delivery:2500}, items };
+      const orders=seedOrders(items);
+      await sset(K_CAT,cat); await sset(K_ORD,orders); await sset(K_IMG,{});
+      S.orders=orders;
+    } else {
+      S.orders = ord || [];
+    }
+    S.settings = cat.settings; S.items = cat.items; S.images = img || {};
+    render();
+  }
+  async function saveCatalog(){ await sset(K_CAT,{settings:S.settings,items:S.items}); }
+  async function saveOrders(){ await sset(K_ORD,S.orders); }
+  async function saveImages(){ await sset(K_IMG,S.images); }
+
+  /* ============ render: shell ============ */
+  function render(){
+    $("brandName").textContent=S.settings.name;
+    $("brandCity").textContent=S.settings.city;
+    $("cartPip").textContent=S.cart.reduce((n,l)=>n+l.qty,0);
+    $("dStart").value=S.start; $("dDays").value=String(S.days);
+    $("retDate").textContent = "Back in warehouse " + fmt(addDays(endDate(),1));
+    $("shopView").style.display = S.mode==="shop" ? "" : "none";
+    $("whView").style.display = S.mode==="wh" ? "" : "none";
+    $("tabShop").classList.toggle("on",S.mode==="shop");
+    $("tabWh").classList.toggle("on",S.mode==="wh");
+    if(S.mode==="shop") renderShop(); else renderWarehouse();
+  }
+
+  /* ============ render: shop ============ */
+  function renderShop(){
+    const cats=["All",...CATS.filter(c=>S.items.some(i=>i.cat===c))];
+    $("filters").innerHTML = cats.map(c=>
+      `<button class="chip ${c===S.filter?"on":""}" data-cat="${esc(c)}">${esc(c)}</button>`
+    ).join("") + `<span class="count" id="shownCount"></span>`;
+
+    const a=S.start,b=endDate();
+    const list=S.items.filter(i=>S.filter==="All"||i.cat===S.filter);
+    $("shownCount").textContent = `${list.length} of ${S.items.length} lines`;
+
+    if(!list.length){
+      $("grid").innerHTML=`<div class="empty" style="grid-column:1/-1"><b>Nothing in this category yet</b>Add stock from the Warehouse tab.</div>`;
+      return;
+    }
+
+    $("grid").innerHTML = list.map(it=>{
+      const free=freeToRent(it,a,b), total=stockLeft(it);
+      const pct = total? Math.round(free/total*100):0;
+      const cls = free===0?"none":(pct<25?"low":"");
+      const note = free===0
+        ? `All ${total} out on these dates`
+        : (pct<25 ? `Only ${free} left for ${fmt(a)} to ${fmt(b)}` : `Free ${fmt(a)} to ${fmt(b)}`);
+      return `
+      <article class="card">
+        <div class="thumb">${thumbHTML(it)}<span class="tag">${esc(it.cat)}</span></div>
+        <div class="card-body">
+          <h3>${esc(it.name)}</h3>
+          <div class="prices">
+            ${it.forRent?`<div class="price rent"><em>Rent</em><b>${rs(it.rent)}<span style="font-size:11px;color:var(--ink-soft)">/day</span></b></div>`:""}
+            ${it.forSale?`<div class="price buy"><em>Buy</em><b>${rs(it.buy)}</b></div>`:""}
+          </div>
+          <div class="avail">
+            <div class="avail-top"><span>Available</span><b>${free} / ${total}</b></div>
+            <div class="bar"><i class="${cls}" style="width:${pct}%"></i></div>
+            <div class="avail-note ${free===0?"out":""}">${note}</div>
+          </div>
+          <div class="actions">
+            <div class="stepper">
+              <button data-step="-1" data-id="${it.id}">−</button>
+              <input type="number" min="1" value="1" id="q_${it.id}">
+              <button data-step="1" data-id="${it.id}">+</button>
+            </div>
+            ${it.forRent?`<button class="btn btn-rent" data-add="rent" data-id="${it.id}" ${free===0?"disabled":""}>${free===0?"Booked":"Rent"}</button>`:""}
+            ${it.forSale?`<button class="btn btn-buy" data-add="buy" data-id="${it.id}" ${freeToBuy(it)===0?"disabled":""}>Buy</button>`:""}
+          </div>
+        </div>
+      </article>`;
+    }).join("");
+  }
+
+  /* ============ cart ============ */
+  function addToCart(id,mode){
+    const it=S.items.find(i=>i.id===id); if(!it) return;
+    const qtyEl=$("q_"+id);
+    let qty=Math.max(1,parseInt(qtyEl?qtyEl.value:1,10)||1);
+    const a=S.start,b=endDate();
+
+    if(mode==="rent"){
+      const free=freeToRent(it,a,b);
+      if(free<=0){ toast("Nothing free on those dates."); return; }
+      if(qty>free){ qty=free; toast(`Only ${free} free, added that many.`); }
+      const key=S.cart.find(l=>l.itemId===id&&l.mode==="rent"&&l.start===a&&l.end===b);
+      if(key) key.qty+=qty;
+      else S.cart.push({itemId:id,name:it.name,mode:"rent",qty,start:a,end:b,days:S.days,unit:it.rent,depositEach:it.deposit});
+    } else {
+      const free=freeToBuy(it);
+      if(free<=0){ toast("That line is sold out."); return; }
+      if(qty>free){ qty=free; toast(`Only ${free} in stock, added that many.`); }
+      const key=S.cart.find(l=>l.itemId===id&&l.mode==="buy");
+      if(key) key.qty+=qty;
+      else S.cart.push({itemId:id,name:it.name,mode:"buy",qty,start:"",end:"",days:0,unit:it.buy,depositEach:0});
+    }
+    if(qtyEl) qtyEl.value=1;
+    toast(mode==="rent"?"Added to the hire list":"Added to buy");
+    render();
+  }
+
+  function cartTotals(){
+    const sub=S.cart.reduce((n,l)=>n+lineAmt(l),0);
+    const dep=S.cart.reduce((n,l)=>n+l.depositEach*l.qty,0);
+    const del=S.cart.some(l=>l.mode==="rent")||S.cart.length?S.settings.delivery:0;
+    return {sub,dep,del,total:sub+dep+del};
+  }
+  function lineAmt(l){ return l.mode==="rent" ? l.unit*l.qty*l.days : l.unit*l.qty; }
+
+  function openDrawer(){ $("scrim").classList.add("on"); $("drawer").classList.add("on"); renderDrawer(); }
+  function closeDrawer(){ $("scrim").classList.remove("on"); $("drawer").classList.remove("on"); if(S.step==="done"){S.step="cart";} }
+
+  function renderDrawer(){
+    const b=$("drawerBody"), f=$("drawerFoot"), t=cartTotals();
+
+    if(S.step==="done"){
+      $("drawerTitle").textContent="Order placed";
+      const o=S.orders[0];
+      b.innerHTML=`<div class="done">
+        <div class="tick">✓</div>
+        <h2>Booked.</h2>
+        <p style="color:var(--ink-soft);font-size:14px;margin:0">We will call ${esc(o.customer.phone)} a day before delivery to confirm the drop time.</p>
+        <div class="oid">${esc(o.id)}</div>
+        <div class="note" style="text-align:left">Your items are now blocked in the warehouse for these dates. You can see the order under the Warehouse tab.</div>
+      </div>`;
+      f.innerHTML=`<button class="btn btn-primary" style="width:100%" id="doneBtn">Back to the catalogue</button>`;
+      $("doneBtn").onclick=()=>{S.step="cart";closeDrawer();render();};
+      return;
+    }
+
+    if(!S.cart.length){
+      $("drawerTitle").textContent="Cart";
+      b.innerHTML=`<div class="empty"><b>Cart is empty</b>Pick your date at the top, then add what you need.</div>`;
+      f.innerHTML="";
+      return;
+    }
+
+    if(S.step==="cart"){
+      $("drawerTitle").textContent="Cart";
+      b.innerHTML = S.cart.map((l,i)=>{
+        const it=S.items.find(x=>x.id===l.itemId)||{name:l.name,id:l.itemId};
+        return `<div class="line">
+          <div class="line-thumb">${thumbHTML(it)}</div>
+          <div class="line-main">
+            <strong>${esc(l.name)}</strong>
+            <span class="badge ${l.mode}">${l.mode==="rent"?"On hire":"Purchase"}</span>
+            <div class="line-meta">${l.qty} × ${rs(l.unit)}${l.mode==="rent"?` × ${l.days}d`:""}</div>
+            ${l.mode==="rent"?`<div class="line-meta">${fmt(l.start)} to ${fmt(l.end)}</div>`:""}
+            <button class="link" data-rm="${i}">Remove</button>
+          </div>
+          <div class="line-amt">${rs(lineAmt(l))}</div>
+        </div>`;
+      }).join("");
+      f.innerHTML=`
+        <div class="totals">
+          <div class="trow"><span>Items</span><span>${rs(t.sub)}</span></div>
+          <div class="trow"><span>Refundable deposit</span><span>${rs(t.dep)}</span></div>
+          <div class="trow"><span>Delivery and pickup</span><span>${rs(t.del)}</span></div>
+          <div class="trow big"><span>Total</span><span>${rs(t.total)}</span></div>
+          <div class="trow muted"><span>Deposit comes back after the return check</span></div>
+        </div>
+        <button class="btn btn-primary" style="width:100%" id="toDetails">Continue to details</button>`;
+      $("toDetails").onclick=()=>{S.step="details";renderDrawer();};
+      return;
+    }
+
+    if(S.step==="details"){
+      $("drawerTitle").textContent="Where are we delivering?";
+      b.innerHTML=`<div class="form">
+        <div class="inp"><label for="cName">Name</label><input id="cName" placeholder="Full name"></div>
+        <div class="frow">
+          <div class="inp"><label for="cPhone">Phone</label><input id="cPhone" placeholder="10 digits" inputmode="numeric"></div>
+          <div class="inp"><label for="cEmail">Email</label><input id="cEmail" placeholder="Optional"></div>
+        </div>
+        <div class="inp"><label for="cVenue">Venue address</label><textarea id="cVenue" rows="3" placeholder="Hall name, area, landmark"></textarea></div>
+        <div class="note">Delivery on ${fmtLong(S.cart.find(l=>l.mode==="rent")?.start || S.start)} and pickup the morning after the event.</div>
+        <div id="detErr"></div>
+      </div>`;
+      f.innerHTML=`<div style="display:flex;gap:10px">
+        <button class="btn btn-ghost" id="backCart" style="height:auto;padding:13px 16px">Back</button>
+        <button class="btn btn-primary" style="flex:1" id="toPay">Continue to payment</button></div>`;
+      $("backCart").onclick=()=>{S.step="cart";renderDrawer();};
+      $("toPay").onclick=()=>{
+        const n=$("cName").value.trim(), p=$("cPhone").value.trim();
+        if(n.length<2||p.length<7){ $("detErr").innerHTML=`<div class="warn">Add a name and a working phone number so we can confirm the drop.</div>`; return; }
+        S.buyer={name:n,phone:p,email:$("cEmail").value.trim(),venue:$("cVenue").value.trim()};
+        S.step="pay"; renderDrawer();
+      };
+      return;
+    }
+
+    if(S.step==="pay"){
+      $("drawerTitle").textContent="Payment";
+      const opts=[["upi","UPI"],["card","Credit or debit card"],["nb","Net banking"]];
+      b.innerHTML=`<div class="pay">
+        ${opts.map(([v,label])=>`<label class="pay-opt ${S.pay===v?"on":""}"><input type="radio" name="pm" value="${v}" ${S.pay===v?"checked":""}><span>${label}</span></label>`).join("")}
+      </div>
+      <div class="totals" style="margin-top:18px">
+        <div class="trow"><span>Items</span><span>${rs(t.sub)}</span></div>
+        <div class="trow"><span>Refundable deposit</span><span>${rs(t.dep)}</span></div>
+        <div class="trow"><span>Delivery and pickup</span><span>${rs(t.del)}</span></div>
+        <div class="trow big"><span>Paying now</span><span>${rs(t.total)}</span></div>
+      </div>
+      <div class="note" style="margin-top:14px">Demo checkout. No card details are asked for and no money moves. This is the point where a live gateway like Razorpay or Stripe would take over.</div>`;
+      b.querySelectorAll('input[name=pm]').forEach(r=>r.onchange=()=>{S.pay=r.value;renderDrawer();});
+      f.innerHTML=`<div style="display:flex;gap:10px">
+        <button class="btn btn-ghost" id="backDet" style="height:auto;padding:13px 16px">Back</button>
+        <button class="btn btn-primary" style="flex:1" id="payNow">Pay ${rs(t.total)}</button></div>`;
+      $("backDet").onclick=()=>{S.step="details";renderDrawer();};
+      $("payNow").onclick=placeOrder;
+    }
+  }
+
+  async function placeOrder(){
+    // re-check availability at the last moment
+    for(const l of S.cart){
+      const it=S.items.find(i=>i.id===l.itemId); if(!it) continue;
+      const others=S.cart.filter(x=>x!==l);
+      const saved=S.cart; S.cart=others;
+      const free = l.mode==="rent" ? freeToRent(it,l.start,l.end) : freeToBuy(it);
+      S.cart=saved;
+      if(l.qty>free){ toast(`${it.name} just got booked by someone else. Adjust the quantity.`); S.step="cart"; renderDrawer(); return; }
+    }
+    const t=cartTotals();
+    const rentLines=S.cart.filter(l=>l.mode==="rent");
+    const order={
+      id:"WD-"+Math.floor(1000+Math.random()*8999),
+      customer:S.buyer,
+      lines:S.cart.map(l=>({itemId:l.itemId,name:l.name,mode:l.mode,qty:l.qty,start:l.start,end:l.end,days:l.days,unit:l.unit,amount:lineAmt(l),deposit:l.depositEach*l.qty})),
+      subtotal:t.sub, deposit:t.dep, delivery:t.del, total:t.total,
+      start: rentLines.length?rentLines.map(l=>l.start).sort()[0]:"",
+      end: rentLines.length?rentLines.map(l=>l.end).sort().slice(-1)[0]:"",
+      createdAt:Date.now(), status:"Confirmed", method:S.pay
+    };
+    S.orders.unshift(order);
+    await saveOrders();
+    S.cart=[]; S.step="done";
+    renderDrawer(); render();
+  }
+
+  /* ============ warehouse ============ */
+  function renderWarehouse(){
+    const body=$("whBody");
+    $("wtInv").classList.toggle("on",S.whTab==="inv");
+    $("wtOrd").classList.toggle("on",S.whTab==="ord");
+    $("wtSet").classList.toggle("on",S.whTab==="set");
+
+    if(S.whTab==="inv") return renderInventory(body);
+    if(S.whTab==="ord") return renderOrders(body);
+    return renderSettings(body);
+  }
+
+  function renderInventory(body){
+    const today=iso(new Date());
+    const live=S.orders.filter(o=>o.end>=today && o.start);
+    const pieces=S.items.reduce((n,i)=>n+i.qty,0);
+    const outNow=S.orders.filter(o=>o.start<=today&&o.end>=today).reduce((n,o)=>n+o.lines.reduce((m,l)=>m+(l.mode==="rent"?l.qty:0),0),0);
+    const upcoming=S.orders.filter(o=>o.start>today).reduce((n,o)=>n+o.total,0);
+
+    body.innerHTML=`
+      <div class="stats">
+        <div class="stat"><em>Lines in catalogue</em><b>${S.items.length}</b></div>
+        <div class="stat"><em>Pieces owned</em><b>${pieces.toLocaleString("en-IN")}</b></div>
+        <div class="stat"><em>Out on hire today</em><b>${outNow.toLocaleString("en-IN")}</b></div>
+        <div class="stat"><em>Booked, not yet delivered</em><b>${rs(upcoming)}</b></div>
+      </div>
+      <div class="bar-head">
+        <h2>Inventory</h2>
+        <button class="btn btn-dark" id="addItem" style="height:auto;padding:11px 16px">Add an item</button>
+      </div>
+      <div id="itemForm"></div>
+      <table>
+        <thead><tr>
+          <th>Item</th><th class="hide-sm">Available for</th>
+          <th class="num">Qty</th><th class="num">Rent/day</th><th class="num">Sale</th><th class="num">Deposit</th><th></th>
+        </tr></thead>
+        <tbody>
+        ${S.items.map(it=>`
+          <tr>
+            <td><div class="iname">
+              <div class="rowthumb">${thumbHTML(it)}</div>
+              <div><b>${esc(it.name)}</b><small>${esc(it.cat)}${it.desc?" · "+esc(it.desc):""}</small></div>
+            </div></td>
+            <td class="hide-sm"><div class="flags">
+              ${it.forRent?'<span class="flag on-rent">Hire</span>':''}
+              ${it.forSale?'<span class="flag on-buy">Sale</span>':''}
+              ${!it.forRent&&!it.forSale?'<span class="flag">Hidden</span>':''}
+            </div></td>
+            <td class="num">${it.qty}</td>
+            <td class="num">${it.forRent?rs(it.rent):"—"}</td>
+            <td class="num">${it.forSale?rs(it.buy):"—"}</td>
+            <td class="num">${rs(it.deposit)}</td>
+            <td class="num"><button class="tbtn" data-edit="${it.id}">Edit</button>
+              <button class="tbtn danger" data-del="${it.id}">Delete</button></td>
+          </tr>`).join("")}
+        </tbody>
+      </table>
+      <div style="height:60px"></div>`;
+
+    if(S.editing!==null) drawItemForm();
+  }
+
+  function drawItemForm(){
+    const editing = S.editing && S.editing!=="new" ? S.items.find(i=>i.id===S.editing) : null;
+    const v = editing || {name:"",cat:"Seating",qty:1,rent:0,buy:0,deposit:0,desc:"",forRent:true,forSale:true};
+    const prevSrc = S.draftPhoto || (editing ? S.images[editing.id] : null);
+
+    $("itemForm").innerHTML=`
+      <div style="border:1px solid var(--line);border-radius:14px;padding:20px;margin-bottom:26px;background:var(--paper)">
+        <div class="bar-head" style="padding-bottom:14px"><h2 style="font-size:17px">${editing?"Edit item":"New item"}</h2></div>
+        <div style="display:grid;grid-template-columns:220px 1fr;gap:22px;align-items:start" class="formgrid">
+          <div>
+            <div class="photo-prev" id="prev">${prevSrc?`<img src="${prevSrc}">`:`<div style="height:100%;display:grid;place-items:center;color:var(--ink-soft);font-size:12.5px">No photo yet</div>`}</div>
+            <div class="photo-drop" style="margin-top:10px" id="pick">Upload a photo</div>
+            <input type="file" accept="image/*" id="file" style="display:none">
+            <div class="hint" style="margin-top:7px">Shot from the front, plain background works best.</div>
+          </div>
+          <div class="form">
+            <div class="frow">
+              <div class="inp" style="flex:2"><label for="fName">Item name</label><input id="fName" value="${esc(v.name)}" placeholder="Gold Chiavari Chair"></div>
+              <div class="inp"><label for="fCat">Category</label><select id="fCat">${CATS.map(c=>`<option ${c===v.cat?"selected":""}>${c}</option>`).join("")}</select></div>
+            </div>
+            <div class="inp"><label for="fDesc">Short description</label><input id="fDesc" value="${esc(v.desc)}" placeholder="Cushioned seat, stackable"></div>
+            <div class="frow">
+              <div class="inp"><label for="fQty">Pieces owned</label><input type="number" id="fQty" min="1" value="${v.qty}"></div>
+              <div class="inp"><label for="fRent">Rent per day</label><input type="number" id="fRent" min="0" value="${v.rent}"></div>
+              <div class="inp"><label for="fBuy">Sale price</label><input type="number" id="fBuy" min="0" value="${v.buy}"></div>
+              <div class="inp"><label for="fDep">Deposit each</label><input type="number" id="fDep" min="0" value="${v.deposit}"></div>
+            </div>
+            <div class="frow" style="gap:20px">
+              <label class="check"><input type="checkbox" id="fRentOn" ${v.forRent?"checked":""}> Available on hire</label>
+              <label class="check"><input type="checkbox" id="fSaleOn" ${v.forSale?"checked":""}> Available to buy</label>
+            </div>
+            <div id="formErr"></div>
+            <div style="display:flex;gap:10px">
+              <button class="btn btn-primary" id="saveItem">${editing?"Save changes":"Add to catalogue"}</button>
+              <button class="btn btn-ghost" id="cancelItem" style="height:auto;padding:13px 18px">Cancel</button>
+            </div>
+          </div>
+        </div>
+      </div>`;
+
+    $("pick").onclick=()=>$("file").click();
+    $("file").onchange=async e=>{
+      const f=e.target.files[0]; if(!f) return;
+      try{ S.draftPhoto = await shrink(f); $("prev").innerHTML=`<img src="${S.draftPhoto}">`; }
+      catch(err){ toast("That file could not be read. Try a JPG or PNG."); }
+    };
+    $("cancelItem").onclick=()=>{S.editing=null;S.draftPhoto=null;renderWarehouse();};
+    $("saveItem").onclick=async()=>{
+      const name=$("fName").value.trim();
+      const qty=parseInt($("fQty").value,10)||0;
+      if(name.length<2||qty<1){ $("formErr").innerHTML=`<div class="warn">Give the item a name and at least one piece in stock.</div>`; return; }
+      const data={
+        name, cat:$("fCat").value, desc:$("fDesc").value.trim(), qty,
+        rent:parseInt($("fRent").value,10)||0, buy:parseInt($("fBuy").value,10)||0,
+        deposit:parseInt($("fDep").value,10)||0,
+        forRent:$("fRentOn").checked, forSale:$("fSaleOn").checked
+      };
+      let id;
+      if(editing){ Object.assign(editing,data); id=editing.id; }
+      else { id=uid("it_"); S.items.unshift({id,...data}); }
+      if(S.draftPhoto){ S.images[id]=S.draftPhoto; await saveImages(); }
+      await saveCatalog();
+      S.editing=null; S.draftPhoto=null;
+      toast(editing?"Item updated":"Item added");
+      renderWarehouse();
+    };
+  }
+
+  function shrink(file, max=900){
+    return new Promise((res,rej)=>{
+      const r=new FileReader();
+      r.onerror=()=>rej(new Error("read"));
+      r.onload=()=>{
+        const img=new Image();
+        img.onerror=()=>rej(new Error("decode"));
+        img.onload=()=>{
+          const s=Math.min(1,max/Math.max(img.width,img.height));
+          const c=document.createElement("canvas");
+          c.width=Math.round(img.width*s); c.height=Math.round(img.height*s);
+          c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+          res(c.toDataURL("image/jpeg",0.72));
+        };
+        img.src=r.result;
+      };
+      r.readAsDataURL(file);
+    });
+  }
+
+  function renderOrders(body){
+    const today=iso(new Date());
+    if(!S.orders.length){
+      body.innerHTML=`<div class="empty" style="padding-top:70px"><b>No orders yet</b>Bookings from the shop will land here.</div>`;
+      return;
+    }
+    const rev=S.orders.reduce((n,o)=>n+o.subtotal,0);
+    const held=S.orders.filter(o=>o.end>=today).reduce((n,o)=>n+o.deposit,0);
+    body.innerHTML=`
+      <div class="stats">
+        <div class="stat"><em>Orders</em><b>${S.orders.length}</b></div>
+        <div class="stat"><em>Booked value</em><b>${rs(rev)}</b></div>
+        <div class="stat"><em>Deposits held</em><b>${rs(held)}</b></div>
+      </div>
+      <div class="bar-head"><h2>Orders</h2></div>
+      ${S.orders.map(o=>{
+        const live = o.start && o.start<=today && o.end>=today;
+        const past = o.end && o.end<today;
+        const st = live?["out","Out now"]:(past?["done","Returned"]:["","Confirmed"]);
+        return `<div class="ordercard">
+          <div class="ordercard-top">
+            <b>${esc(o.id)}</b>
+            <span class="who">${esc(o.customer.name)}</span>
+            <span class="status ${st[0]}">${st[1]}</span>
+            <span class="amt">${rs(o.total)}</span>
+          </div>
+          <div style="font-size:12.5px;color:var(--ink-soft);margin-top:4px">
+            ${esc(o.customer.phone)}${o.customer.venue?" · "+esc(o.customer.venue):""}
+            ${o.start?` · ${fmtLong(o.start)} to ${fmtLong(o.end)}`:""}
+          </div>
+          <div class="ol">
+            ${o.lines.map(l=>`<span><b>${l.qty} ×</b> ${esc(l.name)} · ${l.mode==="rent"?`hire ${l.days} days`:"purchase"} · ${rs(l.amount)}</span>`).join("")}
+          </div>
+        </div>`;
+      }).join("")}
+      <div style="height:60px"></div>`;
+  }
+
+  function renderSettings(body){
+    body.innerHTML=`
+      <div class="bar-head" style="padding-top:24px"><h2>Settings</h2></div>
+      <div class="form" style="max-width:460px">
+        <div class="inp"><label for="sName">Business name</label><input id="sName" value="${esc(S.settings.name)}"></div>
+        <div class="inp"><label for="sCity">City</label><input id="sCity" value="${esc(S.settings.city)}"></div>
+        <div class="inp"><label for="sDel">Delivery and pickup charge</label><input type="number" id="sDel" value="${S.settings.delivery}"><span class="hint">Flat charge added to every order.</span></div>
+        <div><button class="btn btn-primary" id="saveSet">Save settings</button></div>
+        <div style="height:26px"></div>
+        <div class="note">Reset wipes every item, photo and order and puts the sample catalogue back.</div>
+        <div><button class="btn btn-ghost" id="reset" style="height:auto;padding:12px 16px">Reset all data</button></div>
+      </div>
+      <div style="height:60px"></div>`;
+    $("saveSet").onclick=async()=>{
+      S.settings={name:$("sName").value.trim()||"Untitled",city:$("sCity").value.trim(),delivery:parseInt($("sDel").value,10)||0};
+      await saveCatalog(); toast("Settings saved"); render();
+    };
+    $("reset").onclick=async()=>{
+      const items=seedItems();
+      S.items=items; S.images={}; S.orders=seedOrders(items); S.cart=[];
+      await saveCatalog(); await saveImages(); await saveOrders();
+      toast("Back to the sample catalogue"); render();
+    };
+  }
+
+  /* ============ events ============ */
+  $("tabShop").onclick=()=>{S.mode="shop";render();};
+  $("tabWh").onclick=()=>{S.mode="wh";render();};
+  $("wtInv").onclick=()=>{S.whTab="inv";S.editing=null;renderWarehouse();};
+  $("wtOrd").onclick=()=>{S.whTab="ord";renderWarehouse();};
+  $("wtSet").onclick=()=>{S.whTab="set";renderWarehouse();};
+  $("openCart").onclick=openDrawer;
+  $("closeDrawer").onclick=closeDrawer;
+  $("scrim").onclick=closeDrawer;
+  document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeDrawer(); });
+
+  $("dStart").onchange=e=>{ S.start=e.target.value||S.start; render(); };
+  $("dDays").onchange=e=>{ S.days=parseInt(e.target.value,10); render(); };
+
+  document.getElementById("app").addEventListener("click",async e=>{
+    const t=e.target.closest("button"); if(!t) return;
+
+    if(t.dataset.cat){ S.filter=t.dataset.cat; renderShop(); return; }
+    if(t.dataset.step){
+      const inp=$("q_"+t.dataset.id);
+      inp.value=Math.max(1,(parseInt(inp.value,10)||1)+parseInt(t.dataset.step,10));
+      return;
+    }
+    if(t.dataset.add){ addToCart(t.dataset.id,t.dataset.add); return; }
+    if(t.dataset.rm!==undefined){ S.cart.splice(parseInt(t.dataset.rm,10),1); renderDrawer(); render(); return; }
+    if(t.id==="addItem"){ S.editing="new"; S.draftPhoto=null; renderWarehouse(); window.scrollTo({top:220,behavior:"smooth"}); return; }
+    if(t.dataset.edit){ S.editing=t.dataset.edit; S.draftPhoto=null; renderWarehouse(); return; }
+    if(t.dataset.del){
+      const it=S.items.find(i=>i.id===t.dataset.del);
+      if(!it) return;
+      S.items=S.items.filter(i=>i.id!==it.id);
+      delete S.images[it.id];
+      await saveCatalog(); await saveImages();
+      toast(`${it.name} removed`); renderWarehouse(); return;
+    }
+  });
+
+  boot();
+})();
+</script>
